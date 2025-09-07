@@ -11,6 +11,7 @@ import {
   Settings,
   Route,
   Palette,
+  Box,
 } from "lucide-react";
 import {
   Dropzone,
@@ -31,10 +32,12 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { SimpleColorPicker } from "@/components/ui/simple-color-picker";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   SVGPreviewSkeleton,
   ConfigSkeleton,
 } from "@/components/ui/svg-preview-skeleton";
+import { Viewer3D } from "@/components/ui/3d-viewer";
 import { GPXParser, ParsedGPX } from "@/lib/gpx-parser";
 import { SVGGenerator } from "@/lib/svg-generator";
 
@@ -66,9 +69,17 @@ export default function Home() {
   const [buildingStrokeColor, setBuildingStrokeColor] = useState("#808080");
   const [buildingStrokeWidth, setBuildingStrokeWidth] = useState([1]);
 
+  // 3D Model settings (optimized for 3D printing)
+  const [modelWidth, setModelWidth] = useState([200]);
+  const [modelDepth, setModelDepth] = useState([200]);
+  const [minBuildingHeight, setMinBuildingHeight] = useState([5]);
+  const [maxBuildingHeight, setMaxBuildingHeight] = useState([30]);
+  const [pathExtrusionHeight, setPathExtrusionHeight] = useState([2]);
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [error, setError] = useState<string>("");
+  const [currentView, setCurrentView] = useState<"2d" | "3d">("2d");
 
   // Cache for expensive OSM data
   const [osmDataCache, setOsmDataCache] = useState<{
@@ -631,6 +642,108 @@ export default function Home() {
                     </Card>
                   )}
 
+                  {/* 3D Model Settings */}
+                  {includeBuildings && currentView === "3d" && (
+                    <Card>
+                      <CardHeader className="pb-4">
+                        <CardTitle className="flex items-center gap-2">
+                          <Box className="h-5 w-5" />
+                          3D Model Settings
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="space-y-4">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-sm">Model Width</Label>
+                              <span className="text-sm text-muted-foreground">
+                                {modelWidth[0]}mm
+                              </span>
+                            </div>
+                            <Slider
+                              value={modelWidth}
+                              onValueChange={setModelWidth}
+                              max={300}
+                              min={100}
+                              step={10}
+                            />
+                          </div>
+
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-sm">Model Depth</Label>
+                              <span className="text-sm text-muted-foreground">
+                                {modelDepth[0]}mm
+                              </span>
+                            </div>
+                            <Slider
+                              value={modelDepth}
+                              onValueChange={setModelDepth}
+                              max={300}
+                              min={100}
+                              step={10}
+                            />
+                          </div>
+
+                          <Separator />
+
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-sm">
+                                Min Building Height
+                              </Label>
+                              <span className="text-sm text-muted-foreground">
+                                {minBuildingHeight[0]}mm
+                              </span>
+                            </div>
+                            <Slider
+                              value={minBuildingHeight}
+                              onValueChange={setMinBuildingHeight}
+                              max={10}
+                              min={1}
+                              step={1}
+                            />
+                          </div>
+
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-sm">
+                                Max Building Height
+                              </Label>
+                              <span className="text-sm text-muted-foreground">
+                                {maxBuildingHeight[0]}mm
+                              </span>
+                            </div>
+                            <Slider
+                              value={maxBuildingHeight}
+                              onValueChange={setMaxBuildingHeight}
+                              max={30}
+                              min={4}
+                              step={1}
+                            />
+                          </div>
+
+                          <Separator />
+
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-sm">Path Height</Label>
+                              <span className="text-sm text-muted-foreground">
+                                {pathExtrusionHeight[0]}mm
+                              </span>
+                            </div>
+                            <Slider
+                              value={pathExtrusionHeight}
+                              onValueChange={setPathExtrusionHeight}
+                              max={10}
+                              min={0.5}
+                              step={0.5}
+                            />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </>
               ) : null}
             </div>
@@ -638,11 +751,36 @@ export default function Home() {
 
           {/* Main Content Area */}
           <div className="xl:col-span-8">
-            {/* SVG Preview */}
+            {/* Preview with Tabs */}
             <Card className="h-full flex flex-col">
               <CardHeader className="pb-4 flex-shrink-0">
                 <div className="flex items-center justify-between">
-                  <CardTitle>SVG Preview</CardTitle>
+                  <div className="flex items-center gap-4">
+                    <CardTitle>Preview</CardTitle>
+                    <Tabs
+                      value={currentView}
+                      onValueChange={(value) =>
+                        setCurrentView(value as "2d" | "3d")
+                      }
+                    >
+                      <TabsList>
+                        <TabsTrigger
+                          value="2d"
+                          className="flex items-center gap-2"
+                        >
+                          <MapIcon className="h-4 w-4" />
+                          2D SVG
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="3d"
+                          className="flex items-center gap-2"
+                        >
+                          <Box className="h-4 w-4" />
+                          3D Model
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
                   <div className="flex gap-2">
                     {generatedSvg && (
                       <Button
@@ -688,73 +826,132 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="flex-1 bg-muted/30 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center min-h-0 overflow-auto">
-                  {/* SVG Preview */}
-                  {isGenerating ? (
-                    <SVGPreviewSkeleton />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      {generatedSvg ? (
-                        <div className="w-full h-full p-4">
-                          <div
-                            className="w-full h-full flex items-center justify-center"
-                            dangerouslySetInnerHTML={{ __html: generatedSvg }}
-                          />
-                        </div>
-                      ) : parsedGPX ? (
-                        <div className="text-center space-y-4">
-                          <MapIcon className="h-16 w-16 text-muted-foreground mx-auto" />
-                          <div>
-                            <p className="font-medium">Ready to Convert</p>
-                            <p className="text-sm text-muted-foreground mb-4">
-                              File: {uploadedFiles[0]?.name} (
-                              {parsedGPX.totalPoints.toLocaleString()} points)
-                              {(includeRoads || includeBuildings) && (
-                                <span className="block text-yellow-600 mt-1">
-                                  ⚠️ Map data fetching may take 10-30 seconds
-                                </span>
-                              )}
-                            </p>
-                            <Button
-                              onClick={handleGenerateSVG}
-                              disabled={isGenerating}
-                              className="mt-4"
-                            >
-                              {isGenerating ? (
-                                <>
-                                  <LoaderIcon className="h-4 w-4 mr-2 animate-spin" />
-                                  {includeRoads || includeBuildings
-                                    ? "Fetching map data..."
-                                    : "Generating..."}
-                                </>
-                              ) : (
-                                <>Generate SVG</>
-                              )}
-                            </Button>
-                          </div>
-                        </div>
+                <Tabs
+                  value={currentView}
+                  onValueChange={(value) =>
+                    setCurrentView(value as "2d" | "3d")
+                  }
+                  className="flex-1"
+                >
+                  <TabsContent value="2d" className="flex-1 mt-0">
+                    <div className="h-full bg-muted/30 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center min-h-0 overflow-auto">
+                      {/* SVG Preview */}
+                      {isGenerating ? (
+                        <SVGPreviewSkeleton />
                       ) : (
-                        <div className="text-center space-y-2">
-                          <MapIcon className="h-12 w-12 mx-auto text-muted-foreground" />
-                          <p className="text-muted-foreground">
-                            Upload a GPX file to see the preview here
-                          </p>
+                        <div className="w-full h-full flex items-center justify-center">
+                          {generatedSvg ? (
+                            <div className="w-full h-full p-4">
+                              <div
+                                className="w-full h-full flex items-center justify-center"
+                                dangerouslySetInnerHTML={{
+                                  __html: generatedSvg,
+                                }}
+                              />
+                            </div>
+                          ) : parsedGPX ? (
+                            <div className="text-center space-y-4">
+                              <MapIcon className="h-16 w-16 text-muted-foreground mx-auto" />
+                              <div>
+                                <p className="font-medium">Ready to Convert</p>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                  File: {uploadedFiles[0]?.name} (
+                                  {parsedGPX.totalPoints.toLocaleString()}{" "}
+                                  points)
+                                  {(includeRoads || includeBuildings) && (
+                                    <span className="block text-yellow-600 mt-1">
+                                      ⚠️ Map data fetching may take 10-30
+                                      seconds
+                                    </span>
+                                  )}
+                                </p>
+                                <Button
+                                  onClick={handleGenerateSVG}
+                                  disabled={isGenerating}
+                                  className="mt-4"
+                                >
+                                  {isGenerating ? (
+                                    <>
+                                      <LoaderIcon className="h-4 w-4 mr-2 animate-spin" />
+                                      {includeRoads || includeBuildings
+                                        ? "Fetching map data..."
+                                        : "Generating..."}
+                                    </>
+                                  ) : (
+                                    <>Generate SVG</>
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-center space-y-2">
+                              <MapIcon className="h-12 w-12 mx-auto text-muted-foreground" />
+                              <p className="text-muted-foreground">
+                                Upload a GPX file to see the preview here
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
 
-                {/* Elevation Profile Preview */}
-                {elevationSvg && (
-                  <div className="mt-4 border-2 border-dashed border-muted rounded-lg bg-muted/20 p-4">
-                    <h3 className="font-medium mb-4">Elevation Profile</h3>
-                    <div
-                      className="w-full flex items-center justify-center"
-                      dangerouslySetInnerHTML={{ __html: elevationSvg }}
-                    />
-                  </div>
-                )}
+                    {/* Elevation Profile Preview */}
+                    {elevationSvg && (
+                      <div className="mt-4 border-2 border-dashed border-muted rounded-lg bg-muted/20 p-4">
+                        <h3 className="font-medium mb-4">Elevation Profile</h3>
+                        <div
+                          className="w-full flex items-center justify-center"
+                          dangerouslySetInnerHTML={{ __html: elevationSvg }}
+                        />
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="3d" className="flex-1 mt-0">
+                    <div className="h-full bg-muted/30 rounded-lg border-2 border-dashed border-muted-foreground/25">
+                      {isGenerating ? (
+                        <div className="h-full flex items-center justify-center">
+                          <SVGPreviewSkeleton />
+                        </div>
+                      ) : parsedGPX ? (
+                        <Viewer3D
+                          osmData={osmDataCache?.data}
+                          bounds={
+                            osmDataCache?.data
+                              ? JSON.parse(osmDataCache.bounds)
+                              : undefined
+                          }
+                          gpxPoints={parsedGPX.points}
+                          buildingStyles={{
+                            fillColor: buildingFillColor,
+                            strokeColor: buildingStrokeColor,
+                          }}
+                          trackColor={trackColor}
+                          strokeWidth={strokeWidth[0]}
+                          modelDimensions={{
+                            width: modelWidth[0],
+                            depth: modelDepth[0],
+                          }}
+                          buildingHeightRange={{
+                            min: minBuildingHeight[0],
+                            max: maxBuildingHeight[0],
+                          }}
+                          pathExtrusionHeight={pathExtrusionHeight[0]}
+                          className="h-full"
+                        />
+                      ) : (
+                        <div className="h-full flex items-center justify-center">
+                          <div className="text-center space-y-2">
+                            <Box className="h-12 w-12 mx-auto text-muted-foreground" />
+                            <p className="text-muted-foreground">
+                              Upload a GPX file to see the 3D model
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>
